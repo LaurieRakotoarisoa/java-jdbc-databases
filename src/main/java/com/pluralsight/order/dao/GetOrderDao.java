@@ -9,13 +9,14 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Date;
 
 /**
  * DAO to get an order
  */
 public class GetOrderDao {
-    private String query = "SELECT * FROM orders o WHERE o.order_id = ?";
-    private Database database;
+    private final String query = "SELECT * FROM orders o WHERE o.order_id = ?";
+    private final Database database;
 
     /**
      * Constructor
@@ -33,10 +34,21 @@ public class GetOrderDao {
     public OrderDto getOrderById(ParamsDto paramsDto) {
         OrderDto orderDto = null;
 
-        try (Connection con = null;
+        try (Connection con = database.getConnection();
              PreparedStatement ps = createPreparedStatement(con, paramsDto.getOrderId());
              ResultSet rs = createResultSet(ps)
         ) {
+            if (rs.next() ){
+                long order_id = rs.getLong("order_id");
+                long order_customer_id = rs.getLong("order_customer_id");
+                Date order_date = rs.getDate("order_date");
+                String order_status = rs.getString("order_status");
+                orderDto = new OrderDto();
+                orderDto.setOrderId(order_id);
+                orderDto.setCustomerId(order_customer_id);
+                orderDto.setDate(order_date);
+                orderDto.setStatus(order_status);
+            }
 
         } catch (SQLException ex) {
             ExceptionHandler.handleException(ex);
@@ -53,8 +65,9 @@ public class GetOrderDao {
      * @throws SQLException In case of an error
      */
     private PreparedStatement createPreparedStatement(Connection con, long orderId) throws SQLException {
-
-        return null;
+        PreparedStatement preparedStatement = con.prepareStatement(query);
+        preparedStatement.setLong(1,orderId);
+        return preparedStatement;
     }
 
     /**
@@ -64,6 +77,6 @@ public class GetOrderDao {
      * @throws SQLException In case of an error
      */
     private ResultSet createResultSet(PreparedStatement ps) throws SQLException {
-        return null;
+        return ps.executeQuery();
     }
 }
